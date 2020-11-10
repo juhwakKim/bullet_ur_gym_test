@@ -13,9 +13,10 @@ from pybullet_utils import bullet_client
 from attrdict import AttrDict
 import time
 import pkgutil
+import os
 
 MAX_EPISODE_LEN = 2000
-ROBOT_URDF_PATH = "/home/plaif/Documents/UR5Bullet/UR5/ur_e_description/urdf/ur5e.urdf"
+ROBOT_URDF_PATH = os.getcwd()+"/bullet_ur_gym_test"+"/ur_e_description/urdf/ur5e.urdf"
 TABLE_URDF_PATH = os.path.join(pybullet_data.getDataPath(), "table/table.urdf")
 SPHERE_URDF_PATH = os.path.join(pybullet_data.getDataPath(), "sphere2red.urdf")
 
@@ -23,6 +24,7 @@ class UREnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
+        print(ROBOT_URDF_PATH)
         self._p = bullet_client.BulletClient()
         self._p.resetSimulation()
         self._p.setPhysicsEngineParameter(deterministicOverlappingPairs=1)
