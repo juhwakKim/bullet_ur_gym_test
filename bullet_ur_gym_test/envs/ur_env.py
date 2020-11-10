@@ -9,8 +9,10 @@ import math
 import numpy as np
 import random
 from collections import namedtuple
+from pybullet_utils import bullet_client
 from attrdict import AttrDict
 import time
+import pkgutil
 
 MAX_EPISODE_LEN = 2000
 ROBOT_URDF_PATH = "/home/plaif/Documents/UR5Bullet/UR5/ur_e_description/urdf/ur5e.urdf"
@@ -21,10 +23,24 @@ class UREnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
-        cid = p.connect(p.SHARED_MEMORY)
-        if (cid < 0):
-            p.connect(p.GUI)
-        p.resetDebugVisualizerCamera(1.3, 180, -41, [0.52, -0.2, -0.33])
+        self._p = bullet_client.BulletClient()
+        self._p.resetSimulation()
+        self._p.setPhysicsEngineParameter(deterministicOverlappingPairs=1)
+        #optionally enable EGL for faster headless rendering
+        try:
+            if os.environ["PYBULLET_EGL"]:
+                con_mode = self._p.getConnectionInfo()['connectionMethod']
+                if con_mode==self._p.DIRECT:
+                    egl = pkgutil.get_loader('eglRenderer')
+                    if (egl):
+                        self._p.loadPlugin(egl.get_filename(), "_eglRendererPlugin")
+                    else:
+                        self._p.loadPlugin("eglRendererPlugin")
+        except:
+            pass
+        self.physicsClientId = self._p._client
+        self._p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+
         p.setRealTimeSimulation(True)
         p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=0, cameraPitch=-40, cameraTargetPosition=[0.55,-0.35,0.2])
         self.step_counter = 0
@@ -105,7 +121,7 @@ class UREnv(gym.Env):
             reward -= 2000
             done = True
 
-
+        
         info = {'object_position': self.target}
         self.num += 1
         return obs, reward, done, info
